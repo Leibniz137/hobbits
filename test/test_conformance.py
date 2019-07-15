@@ -1,3 +1,4 @@
+import pathlib
 import shlex
 import subprocess
 
@@ -76,4 +77,13 @@ def docker_endpoint(docker_network):
 
 
 def test_200_status_code(docker_endpoint, docker_relayer):
-    pass
+    completed_proc = subprocess.run(
+        shlex.split('netcat -c localhost 10000'),
+        input=(
+            "EWP 0.2 RPC 5 5\n"
+            "hellohello\n"
+        ).encode('utf-8'),
+        cwd=pathlib.Path(__file__).parent,
+        capture_output=True,
+    )
+    assert completed_proc.returncode == 0
