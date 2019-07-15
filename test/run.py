@@ -19,7 +19,7 @@ FIELDS = [
 ]
 
 LANGS = {
-     'bash':['bash','./parsers/bash/parser.sh'] 
+     'bash':['bash','./parsers/bash/parser.sh'],
      'c': ['./parsers/c/test'],
      'cpp': [ './parsers/cpp/test' ],
      'd': ['./parsers/d/main'],
