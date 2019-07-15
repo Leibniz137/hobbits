@@ -5,6 +5,7 @@ import pytest
 
 DOCKER_NETWORK = 'hobbits'
 DOCKER_IMAGE = 'hobbits-relayer'
+DOCKER_HOBBITS_RELAYER = 'hobbits-relayer'
 DOCKER_HOBBITS_ENDPOINT = 'hobbits-endpoint'
 
 
@@ -22,29 +23,57 @@ def docker_network():
 
 
 @pytest.fixture(scope="session")
-def endpoint(docker_network):
-    cleanup = shlex.split(f'docker rm -f {DOCKER_HOBBITS_ENDPOINT}')
+def docker_relayer(docker_network):
+    cleanup = shlex.split(f'docker rm -f {DOCKER_HOBBITS_RELAYER}')
     subprocess.run(cleanup, check=False)
 
-    docker_run = shlex.split(
-        "docker run -d"
-        f" --hostname {DOCKER_HOBBITS_ENDPOINT}"
-        f" --network {docker_network}"
-        f" --name {DOCKER_HOBBITS_ENDPOINT}"
-        " --entrypoint netcat"
-        " hobbits-relayer -l -p 18000"
+    setup = shlex.split(
+        'docker run -d'
+        f' --network {docker_network}'
+        f' --name {DOCKER_HOBBITS_RELAYER}'
+        ' -p 10000:10000'
+        f' {DOCKER_IMAGE}'
+        ' -b tcp://0.0.0.0:10000 -t tcp://hobbits-endpoint:18000'
     )
     completed_proc = subprocess.run(
-        docker_run,
+        setup,
         stdout=subprocess.PIPE,
         encoding='utf-8',
         check=True
     )
     container_id = completed_proc.stdout.strip()
     yield container_id
-    docker_rmf = shlex.split(f'docker rm -f {container_id}')
-    subprocess.run(docker_rmf, check=True)
+
+    teardown = shlex.split(f'docker rm -f {DOCKER_HOBBITS_RELAYER}')
+    subprocess.run(teardown, check=True)
 
 
-def test_200_status_code(endpoint):
+@pytest.fixture(scope="session")
+def docker_endpoint(docker_network):
+    cleanup = shlex.split(f'docker rm -f {DOCKER_HOBBITS_ENDPOINT}')
+    subprocess.run(cleanup, check=False)
+
+    setup = shlex.split(
+        "docker run -d"
+        f" --hostname {DOCKER_HOBBITS_ENDPOINT}"
+        f" --network {docker_network}"
+        f" --name {DOCKER_HOBBITS_ENDPOINT}"
+        " --entrypoint netcat"
+        f" {DOCKER_IMAGE}"
+        " -l -p 18000"
+    )
+    completed_proc = subprocess.run(
+        setup,
+        stdout=subprocess.PIPE,
+        encoding='utf-8',
+        check=True
+    )
+    container_id = completed_proc.stdout.strip()
+    yield container_id
+
+    teardown = shlex.split(f'docker rm -f {container_id}')
+    subprocess.run(teardown, check=True)
+
+
+def test_200_status_code(docker_endpoint, docker_relayer):
     pass
