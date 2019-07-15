@@ -3,18 +3,34 @@ import subprocess
 
 import pytest
 
+DOCKER_NETWORK = 'hobbits'
+DOCKER_IMAGE = 'hobbits-relayer'
+DOCKER_HOBBITS_ENDPOINT = 'hobbits-endpoint'
+
 
 @pytest.fixture(scope="session")
-def endpoint():
-    container_name = 'hobbits-endpoint'
-    cleanup = shlex.split(f'docker rm -f {container_name}')
+def docker_network():
+    cleanup = shlex.split(f'docker network rm {DOCKER_NETWORK}')
+    subprocess.run(cleanup, check=False)
+
+    setup = shlex.split(f'docker network create {DOCKER_NETWORK}')
+    subprocess.run(setup, check=True)
+    yield DOCKER_NETWORK
+
+    teardown = shlex.split(f'docker network rm {DOCKER_NETWORK}')
+    subprocess.run(teardown, check=True)
+
+
+@pytest.fixture(scope="session")
+def endpoint(docker_network):
+    cleanup = shlex.split(f'docker rm -f {DOCKER_HOBBITS_ENDPOINT}')
     subprocess.run(cleanup, check=False)
 
     docker_run = shlex.split(
         "docker run -d"
-        " --hostname hobbits-endpoint"
-        " --network hobbits"
-        f" --name {container_name}"
+        f" --hostname {DOCKER_HOBBITS_ENDPOINT}"
+        f" --network {docker_network}"
+        f" --name {DOCKER_HOBBITS_ENDPOINT}"
         " --entrypoint netcat"
         " hobbits-relayer -l -p 18000"
     )
