@@ -77,13 +77,22 @@ def docker_endpoint(docker_network):
 
 
 def test_200_status_code(docker_endpoint, docker_relayer):
-    completed_proc = subprocess.run(
+    subprocess.run(
         shlex.split('netcat -c localhost 10000'),
         input=(
             "EWP 0.2 RPC 5 5\n"
             "hellohello\n"
         ).encode('utf-8'),
         cwd=pathlib.Path(__file__).parent,
+    )
+
+    completed_proc = subprocess.run(
+        shlex.split(f'docker logs {DOCKER_HOBBITS_ENDPOINT}'),
         capture_output=True,
     )
-    assert completed_proc.returncode == 0
+    endpoint_stdout = completed_proc.stdout
+    expected = (
+        "EWP 0.2 RPC 5 5\n"
+        "hellohello"
+    )
+    assert endpoint_stdout == completed_proc.stdout
