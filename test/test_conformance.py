@@ -5,7 +5,7 @@ import subprocess
 import pytest
 
 DOCKER_NETWORK = 'hobbits'
-DOCKER_IMAGE = 'hobbits-relayer'
+DOCKER_IMAGE = 'thenateway/hobbits-endpoint'   # XXX: you must trust this image
 DOCKER_HOBBITS_RELAYER = 'hobbits-relayer'
 DOCKER_HOBBITS_ENDPOINT = 'hobbits-endpoint'
 
